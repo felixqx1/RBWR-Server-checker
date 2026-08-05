@@ -12,7 +12,6 @@ app = flask.Flask(__name__)
 
 public_server_ids = []
 
-
 def get_server_data():
     f = open("servers.json", "r")
     data = json.load(f)
@@ -53,8 +52,6 @@ def pull_server_data():
             if not server['jobId'] in current_data:
                 current_data[server['jobId']] = {}
 
-            current_data[server['jobId']][server['lastHeartbeat']]
-
             current_data[server['jobId']][server['lastHeartbeat']] = server['state']
             save_server_data(current_data)
         return True
@@ -66,14 +63,6 @@ def update_thread():
         print("Updating server data...")
         pull_server_data()
         time.sleep(60)
-
-@app.route("/api/servers", methods=["GET"])
-def api_servers():
-    data = pull_server_data()
-    if data is not None:
-        return flask.jsonify(data)
-    else:
-        return flask.jsonify({"error": "Failed to fetch server data"}), 500
 
 @app.route("/style.css")
 def style():
