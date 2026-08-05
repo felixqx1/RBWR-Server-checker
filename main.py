@@ -11,17 +11,55 @@ load_dotenv(".env")
 app = flask.Flask(__name__)
 
 public_server_ids = []
+purge = [
+    "Reactor Scram State",
+    "Startup XFMR",
+    "DoAutoScramU1",
+    "DieselRPM",
+    "Turbine RPM",
+    "FWP1",
+    "FWP2",
+    "Recirc1",
+    "Recirc2",
+    "APRM Setpoint",
+    "AutoPressure",
+    "NextDemandU1",
+    "BypassTurbineAutoTrip",
+    "Vibrations",
+    "Fuel Burn (default 0.54)",
+    "Avg. Rod",
+    "TurbineTrip",
+    "TotalPowerGenerated",
+    "Offsite Power",
+    "StartupUnit1",
+    "BusA",
+    "BusB",
+    "TurbineTrip",
+    "Disk Ruptured",
+    "RPS Trip State B",
+    "RPS Trip State A",
+    "Turbine RPM",
+    "AutoPressure",
+    "TRIPreason",
+    "PointsPerSecond",
+    "DCBus",
+    "StartupUnit2",
+    "SCRAMreason",
+    "DiffPressure",
+    "NextDemandU2",
+    "DoAutoScramU2",
+]
 
 def get_server_data():
-    f = open("servers.json", "r")
-    data = json.load(f)
-    f.close()
+    if not os.path.exists("servers.json"):
+        return {}
+    with open("servers.json", "r") as f:
+        data = json.load(f)
     return data
 
 def save_server_data(data):
-    f = open("servers.json", "w")
-    json.dump(data, f, indent=4)
-    f.close()
+    with open("servers.json", "w") as f:
+        json.dump(data, f, indent=4)
 
 def update_public_servers():
     url = "https://games.roblox.com/v1/games/11765852158/servers/Public?limit=100"
@@ -52,7 +90,25 @@ def pull_server_data():
             if not server['jobId'] in current_data:
                 current_data[server['jobId']] = {}
 
-            current_data[server['jobId']][server['lastHeartbeat']] = server['state']
+            state = server['state']
+            del state["Misc"]
+
+            for key, var in state["Unit1"].items():
+                if isinstance(var, (str, bool)):
+                    continue
+                state["Unit1"][key] = round(var, 2)
+            for key, var in state["Unit2"].items():
+                if isinstance(var, (str, bool)):
+                    continue
+                state["Unit2"][key] = round(var, 2)
+
+            for key in purge:
+                if key in state["Unit1"]:
+                    del state["Unit1"][key]
+                if key in state["Unit2"]:
+                    del state["Unit2"][key]
+
+            current_data[server['jobId']][server['lastHeartbeat']] = state
             save_server_data(current_data)
         return True
     else:
