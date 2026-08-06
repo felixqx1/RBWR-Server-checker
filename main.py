@@ -224,14 +224,6 @@ def build_chart_payload(job_id, snapshots):
         "charts": chart_payload,
     }
 
-@app.route("/api/servers/<job_id>")
-def server_data(job_id):
-    state = get_server_state(job_id)
-    if state is None:
-        return flask.jsonify({"error": "Server not found"}), 404
-    return flask.jsonify(state)
-
-
 @app.route("/servers")
 def servers():
     data = get_server_data()
