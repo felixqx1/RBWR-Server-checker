@@ -1,3 +1,4 @@
+import hashlib
 import flask
 import requests
 import json
@@ -10,6 +11,8 @@ from datetime import datetime, timezone
 load_dotenv(".env")
 
 app = flask.Flask(__name__)
+
+api_key_hash = "621c0599031a0c2a8bae34f1d70048913bb80a548a5dfe149d19d7a362f7d217"
 
 public_server_ids = []
 server_ids = []
@@ -134,7 +137,7 @@ def pull_server_data():
 
         return True
     else:
-        return None
+        return False
 
 def update_thread():
     while True:
@@ -302,6 +305,21 @@ def servers():
     data = get_data("servers.json")
     return flask.render_template("servers.html", servers=build_server_cards(data))
 
+@app.route("/api/servers/refresh", methods=["POST"])
+def refresh_servers():
+    request_api_key = flask.request.headers.get("X-API-KEY")
+
+    if not request_api_key:
+        return flask.abort(401)
+    
+    hashed_api_key = hashlib.sha256(request_api_key.encode()).hexdigest()
+    
+    if hashed_api_key != api_key_hash:
+        return flask.abort(401)
+    
+    success = pull_server_data()
+    return flask.jsonify({"success": success})
+
 @app.route("/servers/<job_id>")
 def server_detail(job_id):
     data = get_data("servers.json")
@@ -350,9 +368,7 @@ def index():
     return flask.render_template("index.html", **payload)
 
 
-if __name__ == "__main__":
-    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        thread = Thread(target=update_thread, daemon=True)
-        thread.start()
+thread = Thread(target=update_thread, daemon=True)
+thread.start()
 
-    app.run(host="0.0.0.0", port=5000)
+app.run(host="0.0.0.0", port=5000)
