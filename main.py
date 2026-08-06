@@ -155,15 +155,15 @@ def build_server_cards(data):
 
 def build_chart_payload(job_id, snapshots):
     metrics = {
-        "APRM": 3,
-        "RTP": 2,
-        "Pressure": 3,
-        "Reactor Temp": 3,
-        "ReactorLevel": 3,
-        "Deareator Level": 3,
-        "Hotwell Level": 3,
-        "TurbineHealth": 2,
-        "GeneratorTemperature": 2,
+        "APRM": "3,APRM",
+        "RTP": "2,RTP",
+        "Pressure": "3,Pressure",
+        "Reactor Temp": "3,Reactor Temp",
+        "ReactorLevel": "3,Reactor Level",
+        "Deareator Level": "3,Deareator Level",
+        "Hotwell Level": "3,Hotwell Level",
+        "TurbineHealth": "2,Turbine Health",
+        "GeneratorTemperature": "2,Generator Temperature",
     }
     chart_payload = []
     ordered_snapshots = []
@@ -176,6 +176,7 @@ def build_chart_payload(job_id, snapshots):
         })
 
     for metric, units in metrics.items():
+        units = units.split(",")
         labels = []
         unit1_values = []
         unit2_values = []
@@ -184,19 +185,19 @@ def build_chart_payload(job_id, snapshots):
             unit1 = entry["state"].get("Unit1", {})
             unit2 = entry["state"].get("Unit2", {})
             labels.append(entry["display_time"])
-            if units == 2:
+            if units[0] == "2":
                 unit2_values.append(unit2.get(metric, 0))
-            elif units == 1:
+            elif units[0] == "1":
                 unit1_values.append(unit1.get(metric, 0))
             else:
                 unit1_values.append(unit1.get(metric, 0))
                 unit2_values.append(unit2.get(metric, 0))
 
-        if units == 1:
+        if units[0] == "1":
             datasets = [
                 {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"}
             ]
-        elif units == 2:
+        elif units[0] == "2":
             datasets = [
                 {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"}
             ]
@@ -207,7 +208,7 @@ def build_chart_payload(job_id, snapshots):
             ]
         
         chart_payload.append({
-            "metric": metric,
+            "metric": units[1],
             "labels": labels,
             "datasets": datasets,
         })
