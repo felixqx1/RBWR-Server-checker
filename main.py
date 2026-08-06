@@ -91,7 +91,8 @@ def pull_server_data():
         current_data = get_data("servers.json")
         for job_id in list(current_data.keys()):
             if job_id not in api_job_ids:
-                del current_data[job_id]
+                print(f"deleted {job_id}")
+                #del current_data[job_id]
         save_data(current_data, "servers.json")
 
         found_new_server = False
@@ -102,6 +103,8 @@ def pull_server_data():
 
         if found_new_server:
             update_public_servers()
+
+        save_data(response.json(), "temp.json")
 
         for server in response.json()['data']['servers']:
             if server['jobId'] not in public_server_ids:
@@ -304,7 +307,27 @@ def server_detail(job_id):
     if snapshots is None:
         return flask.abort(404)
     payload = build_chart_payload(job_id, snapshots)
-    return flask.render_template("server_detail.html", **payload)
+
+    temp_data = get_data("temp.json")["data"]["servers"]
+    for server in temp_data:
+        if server['jobId'] == job_id:
+            data = server['state']
+            temp_data = server
+            break
+    scram_reasonU1 = data['Unit1']['SCRAMreason']
+    scram_reasonU2 = data['Unit2']['SCRAMreason']
+    dmand_left = data['Unit1']['Demand Time Left']
+
+
+    dmand_left -= convert_ISO_to_secs(temp_data['lastHeartbeat'])
+
+    summary = {
+        "scram_reason_u1": scram_reasonU1,
+        "scram_reason_u2": scram_reasonU2,
+        "time_to_next_demand": dmand_left,
+    }
+
+    return flask.render_template("server_detail.html", **payload, **summary)
 
 @app.route("/", methods=["GET"])
 def index():

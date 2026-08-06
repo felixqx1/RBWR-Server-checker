@@ -19,6 +19,26 @@
         </div>
     </div>
 
+    <div class="mb-8 grid gap-4 md:grid-cols-3">
+        <div class="rounded-2xl border border-gray-700 bg-gray-800/80 p-5 shadow-lg">
+            <p class="text-sm uppercase tracking-[0.3em] text-blue-300">Scram reason</p>
+            <div class="mt-4 space-y-3 text-sm text-gray-300">
+                <div class="flex items-center justify-between gap-3">
+                    <span>Unit 1</span>
+                    <span class="font-medium text-white">{{ scram_reason_u1 }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <span>Unit 2</span>
+                    <span class="font-medium text-white">{{ scram_reason_u2 }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-2xl border border-gray-700 bg-gray-800/80 p-5 shadow-lg">
+            <p class="text-sm uppercase tracking-[0.3em] text-blue-300">Time to next demand</p>
+            <p class="mt-4 text-2xl font-semibold text-white">{{ time_to_next_demand }}s</p>
+        </div>
+    </div>
+
     <div class="grid lg:grid-cols-2 sm:grid-cols-1 gap-6 md:grid-cols-2">
         {% for chart in charts %}
         <div class="rounded-2xl border border-gray-700 bg-gray-800/80 p-6 shadow-lg">

@@ -22,3 +22,19 @@ def test_server_detail_route():
     client = app_module.app.test_client()
     response = client.get(f"/servers/{first_job_id}")
     assert response.status_code == 200
+
+
+def test_server_detail_route_displays_summary_values():
+    data = app_module.get_data("servers.json")
+    temp_data = app_module.get_data("temp.json")
+    if not data or not temp_data.get("data", {}).get("servers"):
+        return
+
+    first_job_id = next(iter(data))
+    client = app_module.app.test_client()
+    response = client.get(f"/servers/{first_job_id}")
+    html = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Scram reason" in html
+    assert "Time to next demand" in html
