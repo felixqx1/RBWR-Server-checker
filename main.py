@@ -54,6 +54,8 @@ purge = [
     "CasingTemperature",
 ]
 
+latest_server_data = {}
+
 def get_data(path):
     if not os.path.exists(path):
         return {}
@@ -86,25 +88,25 @@ def pull_server_data():
     }
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
-        api_job_ids = [server['jobId'] for server in response.json()['data']['servers']]
-        
         current_data = get_data("servers.json")
-        for job_id in list(current_data.keys()):
-            if job_id not in api_job_ids:
-                print(f"deleted {job_id}")
-                #del current_data[job_id]
-        save_data(current_data, "servers.json")
-
         found_new_server = False
         for server in response.json()['data']['servers']:
             if server['jobId'] not in server_ids:
                 server_ids.append(server['jobId'])
                 found_new_server = True
 
+        success = False
         if found_new_server:
-            update_public_servers()
+            success = update_public_servers()
+        
+        if success:
+            for job_id in list(current_data.keys()):
+                if job_id not in public_server_ids:
+                    print(f"deleted {job_id}")
+                    del current_data[job_id]
+            save_data(current_data, "servers.json")
 
-        save_data(response.json(), "temp.json")
+        latest_server_data.update(response.json())
 
         for server in response.json()['data']['servers']:
             if server['jobId'] not in public_server_ids:
@@ -307,19 +309,29 @@ def server_detail(job_id):
     if snapshots is None:
         return flask.abort(404)
     payload = build_chart_payload(job_id, snapshots)
+    
+    server = {}
 
-    temp_data = get_data("temp.json")["data"]["servers"]
-    for server in temp_data:
-        if server['jobId'] == job_id:
-            data = server['state']
-            temp_data = server
-            break
-    scram_reasonU1 = data['Unit1']['SCRAMreason']
-    scram_reasonU2 = data['Unit2']['SCRAMreason']
-    dmand_left = data['Unit1']['Demand Time Left']
+    if latest_server_data:
+        for server in latest_server_data['data']['servers']:
+            if server['jobId'] == job_id:
+                break
 
+    if not server:
+        summary = {
+            "scram_reason_u1": "N/A",
+            "scram_reason_u2": "N/A",
+            "time_to_next_demand": 0,
+        }
+        return flask.render_template("server_detail.html", **payload, **summary)
+    
+    scram_reasonU1 = server['state']['Unit1']['SCRAMreason']
+    scram_reasonU2 = server['state']['Unit2']['SCRAMreason']
+    dmand_left_data = server['state']['Unit1']['Demand Time Left']
 
-    dmand_left -= convert_ISO_to_secs(temp_data['lastHeartbeat'])
+    elapsed = time.time() - datetime.fromisoformat(server['lastHeartbeat']).timestamp()
+
+    dmand_left = max(0.0, dmand_left_data - elapsed)
 
     summary = {
         "scram_reason_u1": scram_reasonU1,
