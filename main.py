@@ -141,8 +141,11 @@ def pull_server_data():
 
 def update_thread():
     while True:
-        print("Updating server data...")
-        pull_server_data()
+        try:
+            print("Updating server data...", flush=True)
+            pull_server_data()
+        except Exception as e:
+            print("update_thread error:", e, flush=True)
         time.sleep(60)
 
 def convert_ISO_to_secs(timestamp_str):
