@@ -134,6 +134,10 @@ def get_server_state(job_id):
 
 def build_server_cards(data):
     cards = []
+
+    if not data:
+        return cards
+
     for job_id, snapshots in sorted(data.items()):
         if not snapshots:
             continue
@@ -243,6 +247,8 @@ def build_global_chart_payload(snapshots):
     labels = []
     unit1_values = []
     unit2_values = []
+
+    datasets = []
         
     for entry in ordered_snapshots:
         unit1 = entry["data"].get("unit1", {})
@@ -291,7 +297,10 @@ def index():
     payload = build_global_chart_payload(data)
     return flask.render_template("index.html", **payload)
 
-if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-    thread = Thread(target=update_thread, daemon=True)
-    thread.start()
-app.run(host="0.0.0.0", port=5000, debug=True)
+
+if __name__ == "__main__":
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        thread = Thread(target=update_thread, daemon=True)
+        thread.start()
+
+    app.run(host="0.0.0.0", port=5000, debug=True)
