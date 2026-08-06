@@ -164,6 +164,7 @@ def build_chart_payload(job_id, snapshots):
         "Hotwell Level": "3,Hotwell Level",
         "TurbineHealth": "2,Turbine Health",
         "GeneratorTemperature": "2,Generator Temperature",
+        "Demand": "3,Demand"
     }
     chart_payload = []
     ordered_snapshots = []
@@ -185,11 +186,15 @@ def build_chart_payload(job_id, snapshots):
             unit1 = entry["state"].get("Unit1", {})
             unit2 = entry["state"].get("Unit2", {})
             labels.append(entry["display_time"])
+
+            if metric == "Demand":
+                unit1_values.append(unit1.get("DemandU1", 0))
+                unit2_values.append(unit2.get("DemandU2", 0))
             if units[0] == "2":
                 unit2_values.append(unit2.get(metric, 0))
             elif units[0] == "1":
                 unit1_values.append(unit1.get(metric, 0))
-            else:
+            elif units[0] == "3":
                 unit1_values.append(unit1.get(metric, 0))
                 unit2_values.append(unit2.get(metric, 0))
 
