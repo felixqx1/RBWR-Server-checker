@@ -7,7 +7,6 @@ import time
 import os
 from datetime import datetime, timezone
 
-
 load_dotenv(".env")
 
 app = flask.Flask(__name__)
@@ -96,20 +95,12 @@ def pull_server_data():
             state = server['state']
             del state["Misc"]
 
-            for key, var in state["Unit1"].items():
-                if isinstance(var, (str, bool)):
-                    continue
-                state["Unit1"][key] = round(var, 2)
-            for key, var in state["Unit2"].items():
-                if isinstance(var, (str, bool)):
-                    continue
-                state["Unit2"][key] = round(var, 2)
-
-            for key in purge:
-                if key in state["Unit1"]:
-                    del state["Unit1"][key]
-                if key in state["Unit2"]:
-                    del state["Unit2"][key]
+            for unit in ("Unit1", "Unit2"):
+                state[unit] = {
+                    k: (round(v, 2) if not isinstance(v, (str, bool)) else v)
+                    for k, v in state[unit].items()
+                    if k not in purge
+                }
 
             current_data[server['jobId']][server['lastHeartbeat']] = state
             save_server_data(current_data)
@@ -122,19 +113,18 @@ def update_thread():
         print("Updating server data...")
         pull_server_data()
         time.sleep(60)
+
 def convert_ISO_to_secs(timestamp_str):
     dt = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
     now = datetime.now(timezone.utc)
     age_seconds = (now - dt).total_seconds()
     return round(age_seconds)
 
-
 def get_server_state(job_id):
     data = get_server_data()
     if job_id in data:
         return data[job_id]
     return None
-
 
 def build_server_cards(data):
     cards = []
@@ -161,7 +151,6 @@ def build_server_cards(data):
             },
         })
     return cards
-
 
 def build_chart_payload(job_id, snapshots):
     metrics = [
@@ -224,7 +213,6 @@ def server_data(job_id):
 def servers():
     data = get_server_data()
     return flask.render_template("servers.html", servers=build_server_cards(data))
-
 
 @app.route("/servers/<job_id>")
 def server_detail(job_id):
