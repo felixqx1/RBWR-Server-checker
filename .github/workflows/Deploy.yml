@@ -23,7 +23,7 @@ jobs:
                   password: ${{ secrets.DOCKER_PASSWORD }}
 
             - name: Build Docker images
-              run: docker build -f dockerfile -t RBWRSC .
+              run: docker build -f dockerfile -t rbwrsc .
 
             - name: Push Docker images
-              run: docker push RBWRSC
+              run: docker push rbwrsc
