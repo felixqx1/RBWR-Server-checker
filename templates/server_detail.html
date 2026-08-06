@@ -11,7 +11,7 @@
         <a href="/servers" class="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-blue-400 hover:text-white">Back to servers</a>
     </div>
 
-    <div class="grid grid-cols-2 gap-6 md:grid-cols-2">
+    <div class="grid lg:grid-cols-2 sm:grid-cols-1 gap-6 md:grid-cols-2">
         {% for chart in charts %}
         <div class="rounded-2xl border border-gray-700 bg-gray-800/80 p-6 shadow-lg">
             <h3 class="mb-4 text-xl font-semibold">{{ chart.metric }}</h3>

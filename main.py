@@ -62,7 +62,7 @@ def get_server_data():
 
 def save_server_data(data):
     with open("servers.json", "w") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f)
 
 def update_public_servers():
     url = "https://games.roblox.com/v1/games/11765852158/servers/Public?limit=100"
@@ -190,7 +190,7 @@ def build_chart_payload(job_id, snapshots):
             if metric == "Demand":
                 unit1_values.append(unit1.get("DemandU1", 0))
                 unit2_values.append(unit2.get("DemandU2", 0))
-            if units[0] == "2":
+            elif units[0] == "2":
                 unit2_values.append(unit2.get(metric, 0))
             elif units[0] == "1":
                 unit1_values.append(unit1.get(metric, 0))
