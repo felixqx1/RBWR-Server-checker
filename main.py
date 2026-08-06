@@ -50,6 +50,7 @@ purge = [
     "DiffPressure",
     "NextDemandU2",
     "DoAutoScramU2",
+    "Demand Time Left",
 ]
 
 def get_server_data():
