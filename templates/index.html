@@ -2,7 +2,7 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="hero flex flex-col items-center justify-center mx-auto max-w-2xl">
+<div class="hero flex flex-col items-center justify-center mx-auto max-w-2xl mt-10">
     <h2 class="text-2xl font-bold">Welcome to the RBWR Server Checker!</h2>
     <p>This tool allows you to check the status of all RBWR servers.</p>
     <p>for example, you can check the next demand for your server or view its history.</p>
@@ -11,5 +11,45 @@
             Check Servers
         </a>
     </div>
+        {% for chart in charts %}
+        <div class="rounded-2xl border border-gray-700 bg-gray-800/80 p-6 shadow-lg mt-10 mb-10">
+            <h3 class="mb-4 text-xl font-semibold">{{ chart.metric }}</h3>
+            <div class="h-[70vh] min-h-[480px] w-full">
+                <canvas id="chart-{{ loop.index0 }}" class="h-full w-full"></canvas>
+            </div>
+        </div>
+        {% endfor %}
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    const charts = {{ charts|tojson }};
+    charts.forEach((chart, index) => {
+        const ctx = document.getElementById(`chart-${index}`);
+        if (!ctx) return;
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chart.labels,
+                datasets: chart.datasets.map(dataset => ({
+                    ...dataset,
+                    fill: false,
+                    tension: 0.25,
+                    pointRadius: 2,
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: 'white' } }
+                },
+                scales: {
+                    x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                    y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}

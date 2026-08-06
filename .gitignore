@@ -218,3 +218,4 @@ __marimo__/
 .streamlit/secrets.toml
 servers.json
 servers.bak.0
+global.json

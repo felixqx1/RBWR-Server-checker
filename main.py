@@ -53,15 +53,15 @@ purge = [
     "CasingTemperature",
 ]
 
-def get_server_data():
-    if not os.path.exists("servers.json"):
+def get_data(path):
+    if not os.path.exists(path):
         return {}
-    with open("servers.json", "r") as f:
+    with open(path, "r") as f:
         data = json.load(f)
     return data
 
-def save_server_data(data):
-    with open("servers.json", "w") as f:
+def save_data(data, path):
+    with open(path, "w") as f:
         json.dump(data, f)
 
 def update_public_servers():
@@ -89,7 +89,7 @@ def pull_server_data():
         for server in response.json()['data']['servers']:
             if server['jobId'] not in public_server_ids:
                 continue
-            current_data = get_server_data()
+            current_data = get_data("servers.json")
             if not server['jobId'] in current_data:
                 current_data[server['jobId']] = {}
 
@@ -104,7 +104,12 @@ def pull_server_data():
                 }
 
             current_data[server['jobId']][server['lastHeartbeat']] = state
-            save_server_data(current_data)
+            save_data(current_data, "servers.json")
+        current_data = get_data("global.json")
+        current_data[str(datetime.now(timezone.utc).isoformat())] = response.json()['data']['stats']
+        save_data(current_data, "global.json")
+
+
         return True
     else:
         return None
@@ -122,7 +127,7 @@ def convert_ISO_to_secs(timestamp_str):
     return round(age_seconds)
 
 def get_server_state(job_id):
-    data = get_server_data()
+    data = get_data("servers.json")
     if job_id in data:
         return data[job_id]
     return None
@@ -224,27 +229,67 @@ def build_chart_payload(job_id, snapshots):
         "charts": chart_payload,
     }
 
+def build_global_chart_payload(snapshots):
+    chart_payload = []
+    ordered_snapshots = []
+
+    for timestamp, data in sorted(snapshots.items()):
+        ordered_snapshots.append({
+            "timestamp": timestamp,
+            "display_time": f"{convert_ISO_to_secs(timestamp)} seconds ago",
+            "data": data,
+        })
+
+    labels = []
+    unit1_values = []
+    unit2_values = []
+        
+    for entry in ordered_snapshots:
+        unit1 = entry["data"].get("unit1", {})
+        unit2 = entry["data"].get("unit2", {})
+
+        labels.append(entry["display_time"])
+
+        unit1_values.append(unit1.get("megawatts", 0))
+        unit2_values.append(unit2.get("megawatts", 0))
+
+        datasets = [
+            {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"},
+            {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"},
+        ]        
+
+    chart_payload.append({
+        "metric": "global MW",
+        "labels": labels,
+        "datasets": datasets,
+    })
+
+    return {
+        "snapshots": ordered_snapshots,
+        "charts": chart_payload,
+    }
+
 @app.route("/servers")
 def servers():
-    data = get_server_data()
+    data = get_data("servers.json")
     return flask.render_template("servers.html", servers=build_server_cards(data))
 
 @app.route("/servers/<job_id>")
 def server_detail(job_id):
-    data = get_server_data()
+    data = get_data("servers.json")
     snapshots = data.get(job_id)
     if snapshots is None:
         return flask.abort(404)
     payload = build_chart_payload(job_id, snapshots)
     return flask.render_template("server_detail.html", **payload)
 
-@app.route("/style.css")
-def style():
-    return flask.send_from_directory("static", "style.css")
-
 @app.route("/", methods=["GET"])
 def index():
-    return flask.render_template("index.html")
+    data = get_data("global.json")
+    if data is None:
+        return flask.abort(404)
+    payload = build_global_chart_payload(data)
+    return flask.render_template("index.html", **payload)
 
 if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     thread = Thread(target=update_thread, daemon=True)
