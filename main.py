@@ -50,6 +50,7 @@ purge = [
     "NextDemandU2",
     "DoAutoScramU2",
     "Demand Time Left",
+    "CasingTemperature",
 ]
 
 def get_server_data():
@@ -153,18 +154,17 @@ def build_server_cards(data):
     return cards
 
 def build_chart_payload(job_id, snapshots):
-    metrics = [
-        "Xenon",
-        "APRM",
-        "Reactor Temp",
-        "Pressure",
-        "ReactorLevel",
-        "DemandU1",
-        "DemandU2",
-        "Iodine",
-        "Deareator Level",
-        "Hotwell Level",
-    ]
+    metrics = {
+        "APRM": 3,
+        "RTP": 2,
+        "Pressure": 3,
+        "Reactor Temp": 3,
+        "ReactorLevel": 3,
+        "Deareator Level": 3,
+        "Hotwell Level": 3,
+        "TurbineHealth": 2,
+        "GeneratorTemperature": 2,
+    }
     chart_payload = []
     ordered_snapshots = []
 
@@ -175,24 +175,41 @@ def build_chart_payload(job_id, snapshots):
             "state": state,
         })
 
-    for metric in metrics:
+    for metric, units in metrics.items():
         labels = []
         unit1_values = []
         unit2_values = []
+        
         for entry in ordered_snapshots:
             unit1 = entry["state"].get("Unit1", {})
             unit2 = entry["state"].get("Unit2", {})
             labels.append(entry["display_time"])
-            unit1_values.append(unit1.get(metric, 0))
-            unit2_values.append(unit2.get(metric, 0))
+            if units == 2:
+                unit2_values.append(unit2.get(metric, 0))
+            elif units == 1:
+                unit1_values.append(unit1.get(metric, 0))
+            else:
+                unit1_values.append(unit1.get(metric, 0))
+                unit2_values.append(unit2.get(metric, 0))
 
+        if units == 1:
+            datasets = [
+                {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"}
+            ]
+        elif units == 2:
+            datasets = [
+                {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"}
+            ]
+        else:
+            datasets = [
+                {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"},
+                {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"},
+            ]
+        
         chart_payload.append({
             "metric": metric,
             "labels": labels,
-            "datasets": [
-                {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"},
-                {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"},
-            ],
+            "datasets": datasets,
         })
 
     return {
