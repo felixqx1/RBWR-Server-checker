@@ -5,6 +5,8 @@ from threading import Thread
 from dotenv import load_dotenv
 import time
 import os
+from datetime import datetime, timezone
+
 
 load_dotenv(".env")
 
@@ -119,6 +121,118 @@ def update_thread():
         print("Updating server data...")
         pull_server_data()
         time.sleep(60)
+def convert_ISO_to_secs(timestamp_str):
+    dt = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+    now = datetime.now(timezone.utc)
+    age_seconds = (now - dt).total_seconds()
+    return round(age_seconds)
+
+
+def get_server_state(job_id):
+    data = get_server_data()
+    if job_id in data:
+        return data[job_id]
+    return None
+
+
+def build_server_cards(data):
+    cards = []
+    for job_id, snapshots in sorted(data.items()):
+        if not snapshots:
+            continue
+        latest_timestamp = max(snapshots.keys())
+        latest_state = snapshots[latest_timestamp]
+        unit1 = latest_state.get("Unit1", {})
+        unit2 = latest_state.get("Unit2", {})
+        cards.append({
+            "job_id": job_id,
+            "latest_timestamp": f"{convert_ISO_to_secs(latest_timestamp)} seconds ago",
+            "snapshot_count": len(snapshots),
+            "unit1": {
+                "demand_time_left": unit1.get("Demand Time Left", 0),
+                "aprm": unit1.get("APRM", 0),
+                "reactor_temp": unit1.get("Reactor Temp", 0),
+            },
+            "unit2": {
+                "demand_time_left": unit2.get("Demand Time Left", 0),
+                "aprm": unit2.get("APRM", 0),
+                "reactor_temp": unit2.get("Reactor Temp", 0),
+            },
+        })
+    return cards
+
+
+def build_chart_payload(job_id, snapshots):
+    metrics = [
+        "Xenon",
+        "APRM",
+        "Reactor Temp",
+        "Pressure",
+        "ReactorLevel",
+        "DemandU1",
+        "DemandU2",
+        "Iodine",
+        "Deareator Level",
+        "Hotwell Level",
+    ]
+    chart_payload = []
+    ordered_snapshots = []
+
+    for timestamp, state in sorted(snapshots.items()):
+        ordered_snapshots.append({
+            "timestamp": timestamp,
+            "display_time": f"{convert_ISO_to_secs(timestamp)} seconds ago",
+            "state": state,
+        })
+
+    for metric in metrics:
+        labels = []
+        unit1_values = []
+        unit2_values = []
+        for entry in ordered_snapshots:
+            unit1 = entry["state"].get("Unit1", {})
+            unit2 = entry["state"].get("Unit2", {})
+            labels.append(entry["display_time"])
+            unit1_values.append(unit1.get(metric, 0))
+            unit2_values.append(unit2.get(metric, 0))
+
+        chart_payload.append({
+            "metric": metric,
+            "labels": labels,
+            "datasets": [
+                {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"},
+                {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"},
+            ],
+        })
+
+    return {
+        "job_id": job_id,
+        "snapshots": ordered_snapshots,
+        "charts": chart_payload,
+    }
+
+@app.route("/api/servers/<job_id>")
+def server_data(job_id):
+    state = get_server_state(job_id)
+    if state is None:
+        return flask.jsonify({"error": "Server not found"}), 404
+    return flask.jsonify(state)
+
+
+@app.route("/servers")
+def servers():
+    data = get_server_data()
+    return flask.render_template("servers.html", servers=build_server_cards(data))
+
+
+@app.route("/servers/<job_id>")
+def server_detail(job_id):
+    data = get_server_data()
+    snapshots = data.get(job_id)
+    if snapshots is None:
+        return flask.abort(404)
+    payload = build_chart_payload(job_id, snapshots)
+    return flask.render_template("server_detail.html", **payload)
 
 @app.route("/style.css")
 def style():
