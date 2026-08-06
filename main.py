@@ -12,6 +12,7 @@ load_dotenv(".env")
 app = flask.Flask(__name__)
 
 public_server_ids = []
+server_ids = []
 purge = [
     "Reactor Scram State",
     "Startup XFMR",
@@ -79,13 +80,29 @@ def update_public_servers():
         return False
 
 def pull_server_data():
-    update_public_servers()
     url = "https://hydrogen.realisticbwr.org/api/public/servers"
     headers = {
         "User-Agent": "RBWR-Server-Checker/1.0"
     }
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
+        api_job_ids = [server['jobId'] for server in response.json()['data']['servers']]
+        
+        current_data = get_data("servers.json")
+        for job_id in list(current_data.keys()):
+            if job_id not in api_job_ids:
+                del current_data[job_id]
+        save_data(current_data, "servers.json")
+
+        found_new_server = False
+        for server in response.json()['data']['servers']:
+            if server['jobId'] not in server_ids:
+                server_ids.append(server['jobId'])
+                found_new_server = True
+
+        if found_new_server:
+            update_public_servers()
+
         for server in response.json()['data']['servers']:
             if server['jobId'] not in public_server_ids:
                 continue

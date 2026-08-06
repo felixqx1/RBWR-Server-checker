@@ -14,7 +14,7 @@ def test_servers_index_route():
 
 
 def test_server_detail_route():
-    data = app_module.get_server_data()
+    data = app_module.get_data("servers.json")
     if not data:
         return
 
