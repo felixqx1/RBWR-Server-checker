@@ -399,6 +399,8 @@ def server_detail(job_id):
         "scram_reason_u2": scram_reasonU2,
         "time_to_next_demand": dmand_left,
         "next_demand": next_demand,
+        "dmandU1": dmand_next1,
+        "dmandU2": dmand_next2,
     }
 
     return flask.render_template("server_detail.html", **payload, **summary)
