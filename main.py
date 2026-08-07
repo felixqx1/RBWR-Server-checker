@@ -323,6 +323,23 @@ def refresh_servers():
     success = pull_server_data()
     return flask.jsonify({"success": success})
 
+@app.route("/api/servers/latest", methods=["GET"])
+def get_latest_server_data():
+    request_api_key = flask.request.headers.get("X-API-KEY")
+
+    if not request_api_key:
+        return flask.abort(401)
+    
+    hashed_api_key = hashlib.sha256(request_api_key.encode()).hexdigest()
+    
+    if hashed_api_key != api_key_hash:
+        return flask.abort(401)
+    
+    if not latest_server_data:
+        return flask.jsonify({"success": False, "data": None})
+    
+    return flask.jsonify({"success": True, "data": latest_server_data})
+
 @app.route("/servers/<job_id>")
 def server_detail(job_id):
     data = get_data("servers.json")
