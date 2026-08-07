@@ -59,15 +59,34 @@ purge = [
 
 latest_server_data = {}
 
-def get_data(path):
-    if not os.path.exists(path):
+DEBUG = False
+
+if DEBUG:
+    DATA_DIR = os.path.dirname(os.path.abspath(__file__))
+else:
+    DATA_DIR = "/data"
+
+def resolve_data_path(path: str) -> str:
+    if os.path.isabs(path):
+        return path
+    norm_path = path.replace("\\", "/")
+    if norm_path.startswith("data/"):
+        filename = norm_path[5:]
+        return os.path.join(DATA_DIR, filename)
+    return os.path.join(DATA_DIR, norm_path)
+
+def get_data(path: str):
+    filepath = resolve_data_path(path)
+    if not os.path.exists(filepath):
         return {}
-    with open(path, "r") as f:
+    with open(filepath, "r") as f:
         data = json.load(f)
     return data
 
-def save_data(data, path):
-    with open(path, "w") as f:
+def save_data(data, path: str):
+    filepath = resolve_data_path(path)
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, "w") as f:
         json.dump(data, f)
 
 def update_public_servers():
@@ -391,4 +410,4 @@ def index():
 thread = Thread(target=update_thread, daemon=True)
 thread.start()
 
-app.run(host="0.0.0.0", port=5000)
+app.run(host="0.0.0.0", port=5000, debug=DEBUG)
