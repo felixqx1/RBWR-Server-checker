@@ -231,14 +231,16 @@ def build_chart_payload(job_id, snapshots):
             "display_time": f"{convert_ISO_to_secs(timestamp)} seconds ago",
             "state": state,
         })
-
     for metric, units in metrics.items():
         units = units.split(",")
         labels = []
         unit1_values = []
         unit2_values = []
-        
+
+        entry_num = 0
         for entry in ordered_snapshots:
+            if entry_num == 100: 
+                break
             unit1 = entry["state"].get("Unit1", {})
             unit2 = entry["state"].get("Unit2", {})
             labels.append(entry["display_time"])
@@ -253,6 +255,7 @@ def build_chart_payload(job_id, snapshots):
             elif units[0] == "3":
                 unit1_values.append(unit1.get(metric, 0))
                 unit2_values.append(unit2.get(metric, 0))
+            entry_num += 1
 
         if units[0] == "1":
             datasets = [
@@ -296,8 +299,10 @@ def build_global_chart_payload(snapshots):
     unit2_values = []
 
     datasets = []
-        
+    entry_num = 0
     for entry in ordered_snapshots:
+        if entry_num == 100: 
+            break
         unit1 = entry["data"].get("unit1", {})
         unit2 = entry["data"].get("unit2", {})
 
@@ -310,6 +315,7 @@ def build_global_chart_payload(snapshots):
             {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"},
             {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"},
         ]        
+        entry_num += 1
 
     chart_payload.append({
         "metric": "global MW",
