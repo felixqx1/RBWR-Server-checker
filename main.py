@@ -59,7 +59,7 @@ purge = [
 
 latest_server_data = {}
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     DATA_DIR = os.path.dirname(os.path.abspath(__file__))
