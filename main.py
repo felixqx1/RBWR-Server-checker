@@ -406,6 +406,9 @@ def index():
     payload = build_global_chart_payload(data)
     return flask.render_template("index.html", **payload)
 
+@app.context_processor
+def inject_now():
+    return {'now': datetime.utcnow()}
 
 thread = Thread(target=update_thread, daemon=True)
 thread.start()
