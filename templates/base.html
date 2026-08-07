@@ -20,9 +20,16 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-gray-800 text-white p-2 text-center">
-        <p>{{ now.year }} © RBWR Server Checker. All rights reserved.</p>
-        <a href="https://ko-fi.com/felixqx1" target="_blank" rel="noopener" class="font-bold hover:text-orange-400 text-orange-300">My Ko-Fi</a>
+    <footer class="bg-gray-800 text-white p-3 text-center">
+        <p class="mb-2 text-sm text-gray-300">{{ now.year }} © RBWR Server Checker. All rights reserved.</p>
+        <a
+            href="https://ko-fi.com/felixqx1"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center justify-center rounded-full bg-[#ff5f5f] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-red-500/20 transition duration-200 hover:-translate-y-0.5 hover:bg-[#ff4b4b] focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-gray-800"
+        >
+            ☕ Support on Ko-fi
+        </a>
     </footer>
 </body>
 </html>
