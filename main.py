@@ -59,7 +59,7 @@ purge = [
 
 latest_server_data = {}
 
-DEBUG = False
+DEBUG = True
 
 if DEBUG:
     DATA_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -385,6 +385,10 @@ def server_detail(job_id):
     scram_reasonU1 = server['state']['Unit1']['SCRAMreason']
     scram_reasonU2 = server['state']['Unit2']['SCRAMreason']
     dmand_left_data = server['state']['Unit1']['Demand Time Left']
+    dmand_next1 = server['state']['Unit1']['NextDemandU1']
+    dmand_next2 = server['state']['Unit2']['NextDemandU2']
+
+    next_demand = dmand_next1 + dmand_next2
 
     elapsed = time.time() - datetime.fromisoformat(server['lastHeartbeat']).timestamp()
 
@@ -394,6 +398,7 @@ def server_detail(job_id):
         "scram_reason_u1": scram_reasonU1,
         "scram_reason_u2": scram_reasonU2,
         "time_to_next_demand": dmand_left,
+        "next_demand": next_demand,
     }
 
     return flask.render_template("server_detail.html", **payload, **summary)
@@ -408,9 +413,11 @@ def index():
 
 @app.context_processor
 def inject_now():
-    return {'now': datetime.utcnow()}
+    return {'now': datetime.now(tz=timezone.utc)}
 
-thread = Thread(target=update_thread, daemon=True)
-thread.start()
+
+if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    thread = Thread(target=update_thread, daemon=True)
+    thread.start()
 
 app.run(host="0.0.0.0", port=5000, debug=DEBUG)

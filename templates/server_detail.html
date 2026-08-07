@@ -40,8 +40,17 @@
             </div>
         </div>
         <div class="rounded-2xl border border-gray-700 bg-gray-800/80 p-5 shadow-lg">
-            <p class="text-sm uppercase tracking-[0.3em] text-blue-300">Time to next demand</p>
-            <p id="demand-timer" class="mt-4 text-2xl font-semibold text-white">{{ time_to_next_demand | round | int }}s
+            <p class="text-sm uppercase tracking-[0.3em] text-blue-300">Next demand info</p>
+            <div class="mt-4 space-y-3 text-sm text-gray-300">
+            <div class="flex items-center justify-between gap-3">
+                    <span>time to next demand:</span>
+                    <span id="demand-timer" class="font-medium text-white">{{ time_to_next_demand | round | int }}s</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <span>next demand:</span>
+                    <span class="font-medium text-white">{{ next_demand }}</span>
+                </div>
+            </div>
             </p>
         </div>
     </div>
