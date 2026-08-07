@@ -357,7 +357,7 @@ def get_latest_server_data():
     if not latest_server_data:
         return flask.jsonify({"success": False, "data": None})
     
-    return flask.jsonify({"success": True, "data": latest_server_data})
+    return flask.jsonify(latest_server_data)
 
 @app.route("/servers/<job_id>")
 def server_detail(job_id):
