@@ -214,6 +214,30 @@ def build_server_cards(data):
         })
     return cards
 
+def compress(labels, values):
+    if len(values) <= 2:
+        return list(labels), list(values)
+
+    formatted_labels = [int(label.split()[0]) for label in labels]
+
+    compressed_labels = [labels[0]]
+    compressed_values = [values[0]]
+
+    for i in range(1, len(max(formatted_labels, values)) - 1):
+        x1, y1 = formatted_labels[i - 1], values[i - 1]
+        x2, y2 = formatted_labels[i],     values[i]
+        x3, y3 = formatted_labels[i + 1], values[i + 1]
+
+        cross_product = (x2 - x1) * (y3 - y2) - (y2 - y1) * (x3 - x2)
+        if abs(cross_product) > 1e-6:
+            compressed_values.append(values[i])
+            compressed_labels.append(labels[i])
+
+    compressed_labels.append(labels[-1])
+    compressed_values.append(values[-1])
+
+    return compressed_labels, compressed_values
+
 def build_chart_payload(job_id, snapshots):
     metrics = {
         "APRM": "3,APRM",
@@ -242,7 +266,6 @@ def build_chart_payload(job_id, snapshots):
         unit1_values = []
         unit2_values = []
 
-        entry_num = 0
         for entry in ordered_snapshots:
 
             unit1 = entry["state"].get("Unit1", {})
@@ -260,6 +283,9 @@ def build_chart_payload(job_id, snapshots):
                 unit1_values.append(unit1.get(metric, 0))
                 unit2_values.append(unit2.get(metric, 0))
 
+        labels, unit2_values = compress(labels, unit2_values)
+        labels, unit1_values = compress(labels, unit1_values) 
+        
         if units[0] == "1":
             datasets = [
                 {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"}
@@ -311,6 +337,9 @@ def build_global_chart_payload(snapshots):
         unit1_values.append(unit1.get("megawatts", 0))
         unit2_values.append(unit2.get("megawatts", 0))
 
+        labels, unit2_values = compress(labels, unit2_values)
+        labels, unit1_values = compress(labels, unit1_values) 
+        
         datasets = [
             {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"},
             {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"},
