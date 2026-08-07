@@ -419,5 +419,8 @@ def inject_now():
 if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     thread = Thread(target=update_thread, daemon=True)
     thread.start()
+elif not DEBUG:
+    thread = Thread(target=update_thread, daemon=True)
+    thread.start()
 
 app.run(host="0.0.0.0", port=5000, debug=DEBUG)
