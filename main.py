@@ -75,13 +75,18 @@ def resolve_data_path(path: str) -> str:
         return os.path.join(DATA_DIR, filename)
     return os.path.join(DATA_DIR, norm_path)
 
-def get_data(path: str):
+def get_data(path: str, max_retries: int = 5):
     filepath = resolve_data_path(path)
     if not os.path.exists(filepath):
         return {}
-    with open(filepath, "r") as f:
-        data = json.load(f)
-    return data
+    for attempt in range(max_retries):
+        try:
+            with open(filepath, "r") as f:
+                return json.load(f)
+        except Exception:
+            if attempt < max_retries - 1:
+                time.sleep(0.05)
+    return {}
 
 def save_data(data, path: str):
     filepath = resolve_data_path(path)
