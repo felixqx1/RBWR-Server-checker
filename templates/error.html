@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}{{ error_title or (status_code ~ ' Error') }}{% endblock %}
+
+{% block content %}
+<div class="hero flex flex-col items-center justify-center mx-auto max-w-2xl px-6 py-16 text-center">
+    <h1 class="text-3xl font-bold mb-4">
+        {{ error_title or "Something Went Wrong" }}
+    </h1>
+    <p class="text-gray-300 mb-8 max-w-lg">
+        {{ error_message or "An unexpected issue occurred while processing the request." }}
+    </p>
+
+    <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="/servers" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition">
+            Check Servers
+        </a>
+        <a href="/"
+            class="border border-gray-700 text-gray-300 px-6 py-3 rounded-lg hover:bg-gray-800 hover:text-white transition">
+            Home
+        </a>
+        {% if show_retry or status_code == 500 %}
+        <button onclick="window.location.reload()"
+            class="border border-gray-700 text-gray-300 px-6 py-3 rounded-lg hover:bg-gray-800 hover:text-white transition cursor-pointer">
+            Retry
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

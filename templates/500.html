@@ -1,0 +1,7 @@
+{% extends 'error.html' %}
+{% set status_code = 500 %}
+{% set error_title = "Internal Server Error" %}
+{% set error_message = "An unexpected error occurred while processing server telemetry. Our automated monitoring has
+recorded this exception." %}
+{% set error_type = "500 - Server Error" %}
+{% set show_retry = True %}
