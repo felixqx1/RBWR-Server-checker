@@ -88,26 +88,56 @@
     charts.forEach((chart, index) => {
         const ctx = document.getElementById(`chart-${index}`);
         if (!ctx) return;
+
+        const datasets = chart.datasets.map(dataset => ({
+            ...dataset,
+            data: dataset.data.map((val, i) => {
+                const labelStr = String((chart.labels && chart.labels[i]) || '');
+                const match = labelStr.match(/-?\d+(\.\d+)?/);
+                const xVal = match ? parseFloat(match[0]) : i;
+                return { x: xVal, y: val };
+            }),
+            fill: false,
+            tension: 0.25,
+            pointRadius: 2,
+        }));
+
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: chart.labels,
-                datasets: chart.datasets.map(dataset => ({
-                    ...dataset,
-                    fill: false,
-                    tension: 0.25,
-                    pointRadius: 2,
-                }))
+                datasets: datasets
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { labels: { color: 'white' } }
+                    legend: { labels: { color: 'white' } },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                if (!context || !context.length) return '';
+                                const xVal = context[0].parsed.x;
+                                return Math.round(xVal) + ' seconds ago';
+                            }
+                        }
+                    }
                 },
                 scales: {
-                    x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.08)' } },
-                    y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+                    x: {
+                        type: 'linear',
+                        reverse: true,
+                        ticks: {
+                            color: 'white',
+                            callback: function(value) {
+                                return value + ' seconds ago';
+                            }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.08)' }
+                    },
+                    y: {
+                        ticks: { color: 'white' },
+                        grid: { color: 'rgba(255,255,255,0.08)' }
+                    }
                 }
             }
         });
