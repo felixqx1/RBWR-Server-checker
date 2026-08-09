@@ -148,11 +148,16 @@ def pull_server_data():
 
         latest_server_data.update(resp_json)
 
+        rbwr_api_ids = []
+
+        for server1 in servers_list:
+            list.append(rbwr_api_ids, server1['jobId'])
+
         for server in servers_list:
             if server['jobId'] not in public_server_ids:
                 continue
             current_data = get_data("servers.json")
-            if not server['jobId'] in current_data:
+            if not server['jobId'] in current_data and not server["jobId"] in rbwr_api_ids:
                 current_data[server['jobId']] = {}
 
             state = server['state'].copy()
