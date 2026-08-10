@@ -8,6 +8,7 @@ import time
 import os
 from datetime import datetime, timezone
 from werkzeug.exceptions import HTTPException
+import traceback
 
 load_dotenv(".env")
 
@@ -138,26 +139,23 @@ def pull_server_data():
         success = False
         if found_new_server:
             success = update_public_servers()
+
+        rbwr_api_ids = [s['jobId'] for s in servers_list]
         
         if success:
             for job_id in list(current_data.keys()):
-                if job_id not in public_server_ids:
+                if job_id not in public_server_ids and job_id not in rbwr_api_ids:
                     print(f"deleted {job_id}")
                     del current_data[job_id]
             save_data(current_data, "servers.json")
 
         latest_server_data.update(resp_json)
 
-        rbwr_api_ids = []
-
-        for server1 in servers_list:
-            list.append(rbwr_api_ids, server1['jobId'])
-
         for server in servers_list:
-            if server['jobId'] not in public_server_ids:
+            if public_server_ids and server['jobId'] not in public_server_ids:
                 continue
-            current_data = get_data("servers.json")
-            if not server['jobId'] in current_data and not server["jobId"] in rbwr_api_ids:
+
+            if server['jobId'] not in current_data:
                 current_data[server['jobId']] = {}
 
             state = server['state'].copy()
@@ -173,9 +171,9 @@ def pull_server_data():
             current_data[server['jobId']][server['lastHeartbeat']] = state
             save_data(current_data, "servers.json")
         
-        current_data = get_data("global.json")
-        current_data[str(datetime.now(timezone.utc).isoformat())] = resp_json.get('data', {}).get('stats', {})
-        save_data(current_data, "global.json")
+        global_data = get_data("global.json")
+        global_data[str(datetime.now(timezone.utc).isoformat())] = resp_json.get('data', {}).get('stats', {})
+        save_data(global_data, "global.json")
 
         return True
     else:
@@ -187,7 +185,7 @@ def update_thread():
             print("Updating server data...", flush=True)
             pull_server_data()
         except Exception as e:
-            print("update_thread error:", e, flush=True)
+            print(f"update_thread error: {type(e).__name__}: {e}\n{traceback.format_exc()}", flush=True)
         time.sleep(60)
 
 def convert_ISO_to_secs(timestamp_str):
