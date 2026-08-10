@@ -139,10 +139,12 @@ def pull_server_data():
         success = False
         if found_new_server:
             success = update_public_servers()
+
+        rbwr_api_ids = [s['jobId'] for s in servers_list]
         
         if success:
             for job_id in list(current_data.keys()):
-                if job_id not in public_server_ids:
+                if job_id not in public_server_ids and job_id not in rbwr_api_ids:
                     print(f"deleted {job_id}")
                     del current_data[job_id]
             save_data(current_data, "servers.json")
@@ -150,9 +152,9 @@ def pull_server_data():
         latest_server_data.update(resp_json)
 
         for server in servers_list:
-            if server['jobId'] not in public_server_ids:
+            if public_server_ids and server['jobId'] not in public_server_ids:
                 continue
-            current_data = get_data("servers.json")
+
             if server['jobId'] not in current_data:
                 current_data[server['jobId']] = {}
 
@@ -169,9 +171,9 @@ def pull_server_data():
             current_data[server['jobId']][server['lastHeartbeat']] = state
             save_data(current_data, "servers.json")
         
-        current_data = get_data("global.json")
-        current_data[str(datetime.now(timezone.utc).isoformat())] = resp_json.get('data', {}).get('stats', {})
-        save_data(current_data, "global.json")
+        global_data = get_data("global.json")
+        global_data[str(datetime.now(timezone.utc).isoformat())] = resp_json.get('data', {}).get('stats', {})
+        save_data(global_data, "global.json")
 
         return True
     else:
