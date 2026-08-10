@@ -20,9 +20,12 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-gray-800 text-white p-3 text-center">
+    <footer class="bg-gray-800 text-white p-3 text-center flex flex-col items-center">
         <p class="mb-2 text-sm text-gray-300">{{ now.year }} © RBWR Server Checker. All rights reserved.</p>
         <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Support me on Ko-fi', '#ff0000', 'V1F024NQ8S');kofiwidget2.draw();</script>
+        <a href="https://github.com/felixqx1/RBWR-Server-checker" target="_blank" rel="noopener">
+            <img src="/static/img/github.svg" class="w-8 h-8 mt-3"/>
+        </a>
     </footer>
 </body>
 </html>
