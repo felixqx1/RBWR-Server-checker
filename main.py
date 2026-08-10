@@ -432,8 +432,8 @@ def build_global_chart_payload(snapshots):
         labels, unit1_values, unit2_values = compress_multi(labels, unit1_values, unit2_values)
 
     datasets = [
-        {"label": "Unit 1", "data": unit1_values, "borderColor": "#3b82f6"},
-        {"label": "Unit 2", "data": unit2_values, "borderColor": "#f59e0b"},
+        {"label": "Unit 1", "data": list(map(lambda v1: v1 if v1 > 0 else 0, unit1_values)), "borderColor": "#3b82f6"},
+        {"label": "Unit 2", "data": list(map(lambda v2: v2 if v2 > 0 else 0, unit2_values)), "borderColor": "#f59e0b"},
     ]
 
     chart_payload.append({
