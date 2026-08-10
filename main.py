@@ -8,6 +8,7 @@ import time
 import os
 from datetime import datetime, timezone
 from werkzeug.exceptions import HTTPException
+import traceback
 
 load_dotenv(".env")
 
@@ -187,7 +188,7 @@ def update_thread():
             print("Updating server data...", flush=True)
             pull_server_data()
         except Exception as e:
-            print("update_thread error:", e, flush=True)
+            print(f"update_thread error: {type(e).__name__}: {e}\n{traceback.format_exc()}", flush=True)
         time.sleep(60)
 
 def convert_ISO_to_secs(timestamp_str):
